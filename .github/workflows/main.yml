@@ -7,6 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
+
   test:
     runs-on: ubuntu-latest
 
@@ -26,3 +27,14 @@ jobs:
     - name: Run tests
       run: |
         pytest -v test_calculator.py
+
+  auto-merge:
+    if: github.event_name == 'pull_request' && success()
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-merge PR
+        run: |
+          gh pr merge --auto --merge "${{ github.event.pull_request.number }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
