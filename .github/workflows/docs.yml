@@ -1,0 +1,71 @@
+name: Generate and Deploy Documentation
+
+on:
+  push:
+    branches: [main, development]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Generate Markdown documentation
+      run: |
+        
+        # Создаем главную документацию
+        cat > docs/README.md << 'EOF'
+        # Calculator Project Documentation
+        > Auto-generated from source code
+        
+        ## Project Info
+        - **Last Generated:** $(date)
+        - **Commit:** ${{ github.sha }}
+        - **Branch:** ${{ github.ref_name }}
+        - **Version:** $(cat version.py | grep __version__ | cut -d'"' -f2)
+        
+        
+        #### Properties:
+        - **`version`** - current project version
+        
+        ## Example Usage
+        \`\`\`python
+        from calculator import calculate
+        res = calculate("(2+6/3)*5")
+        print(res)
+        \`\`\`
+        
+        *Documentation auto-generated on $(date)*
+        EOF
+        
+        # Заменяем плейсхолдеры
+        sed -i "s/\$(date)/$(date)/g" docs/README.md
+        sed -i "s/\$(cat version.py | grep __version__ | cut -d'\"' -f2)/$(cat version.py | grep __version__ | cut -d'"' -f2)/g" docs/README.md
+        
+        # Создаем дополнительную документацию
+        cat > docs/CHANGELOG.md << 'EOF'
+        # Changelog
+        > Auto-generated changelog
+        
+        ## Current Version: $(cat version.py | grep __version__ | cut -d'"' -f2)
+        
+        ### Last Updates:
+        - **$(date)**: Documentation auto-generation
+        - **Branch:** ${{ github.ref_name }}
+        - **Commit:** ${{ github.sha }}
+        
+        ### Recent Changes:
+        This changelog is automatically updated on each commit.
+        EOF
+        
+        sed -i "s/\$(date)/$(date)/g" docs/CHANGELOG.md
+        sed -i "s/\$(cat version.py | grep __version__ | cut -d'\"' -f2)/$(cat version.py | grep __version__ | cut -d'"' -f2)/g" docs/CHANGELOG.md
+        
+        echo "✅ Markdown documentation generated successfully"
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        force_orphan: true
