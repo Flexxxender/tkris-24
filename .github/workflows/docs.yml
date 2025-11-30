@@ -1,0 +1,72 @@
+name: Update README with metadata
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Generate metadata
+        run: |
+          META_FILE=".generated_meta.txt"
+
+          echo "## Auto-generated metadata" > $META_FILE
+          echo "Generated at: $(date)" >> $META_FILE
+          echo "Commit: ${{ github.sha }}" >> $META_FILE
+          echo "" >> $META_FILE
+
+      - name: Update README.md
+        run: |
+          META_FILE=".generated_meta.txt"
+          START="<!-- AUTO-GENERATED:START -->"
+          END="<!-- AUTO-GENERATED:END -->"
+
+          if ! grep -q "$START" README.md; then
+            {
+              echo ""
+              echo "$START"
+              echo "$END"
+            } >> README.md
+          fi
+
+          awk -v start="$START" -v end="$END" -v meta="$(cat $META_FILE)" '
+            $0 ~ start {
+                print;
+                print meta;
+                inblock=1;
+                next;
+            }
+            $0 ~ end {
+                inblock=0;
+                print;
+                next;
+            }
+            !inblock { print }
+          ' README.md > README.new.md
+
+          mv README.new.md README.md
+
+      - name: Commit & Push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add README.md
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update README metadata for ${{ github.sha }}"
+          git push
