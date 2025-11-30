@@ -33,6 +33,13 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup GitHub CLI
+        run: |
+          gh auth status || gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+      
       - name: Auto-merge PR
         run: |
           gh pr merge --auto --merge "${{ github.event.pull_request.number }}"
