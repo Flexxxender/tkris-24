@@ -42,3 +42,6 @@ def test_invalid_expression_structure():
         calculate("(2+3*4") 
         calculate("(2+3*4))")  
         calculate("2+3(*4)") 
+
+def test_power():
+    assert calculate("5^2") == 25

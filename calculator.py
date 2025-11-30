@@ -10,7 +10,7 @@ def tokenize(expression):
             if current_number:
                 tokens.append(int(current_number))
                 current_number = ''
-            if char in '+-*/()':
+            if char in '+-*/()^':
                 tokens.append(char)
             elif not char.isspace():
                 raise ValueError(f"Неподдерживаемый символ: '{char}'")
@@ -27,7 +27,7 @@ def shunting_yard(tokens):
     
     output = []
     operators = []
-    precedence = {'+': 1, '-': 1, '*': 2, '/': 2}
+    precedence = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3}
     parentheses_count = 0
     
     for token in tokens:
@@ -91,6 +91,8 @@ def evaluate_rpn(tokens):
                 stack.append(a * b)
             elif token == '/':
                 stack.append(a // b)
+            elif token == '^':
+                stack.append(a ** b)
     
     if len(stack) != 1:
         raise ValueError("Некорректное выражение")
